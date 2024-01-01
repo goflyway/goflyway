@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/jiangliuhong/go-flyway/database"
 	"github.com/jiangliuhong/go-flyway/history"
-	"github.com/jiangliuhong/go-flyway/types"
+	"github.com/jiangliuhong/go-flyway/location"
 )
 
 type Command interface {
@@ -21,7 +21,7 @@ func Registry(name string, cmd Command) {
 }
 
 type Options struct {
-	Locations []types.Location // 文件信息
+	Locations []location.Location // 文件信息
 }
 
 func Execute(command string, database database.Database, schemaHistory *history.SchemaHistory, options *Options) error {

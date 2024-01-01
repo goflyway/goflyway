@@ -7,8 +7,7 @@ import (
 	"github.com/jiangliuhong/go-flyway/database"
 	"github.com/jiangliuhong/go-flyway/history"
 	_ "github.com/jiangliuhong/go-flyway/init"
-	"github.com/jiangliuhong/go-flyway/types"
-	"strings"
+	"github.com/jiangliuhong/go-flyway/location"
 )
 
 type flyway struct {
@@ -35,15 +34,15 @@ func (f flyway) buildExecuteParam() (d database.Database, h *history.SchemaHisto
 		return
 	}
 	h = history.New(d, table)
-	var locations []types.Location
+	var locations []location.Location
 	if len(f.config.Locations) > 0 {
 		for _, item := range f.config.Locations {
-			if strings.Index(item, consts.OS_FILE_PREFIX) == 0 {
-				path := item[len(consts.OS_FILE_PREFIX):]
-				locations = append(locations, types.Location{IsFileSystem: true, Path: path})
-			} else {
-				locations = append(locations, types.Location{IsFileSystem: false, Path: item})
+			ls, err2 := location.New(item)
+			if err2 != nil {
+				err = err2
+				return
 			}
+			locations = append(locations, ls...)
 		}
 	}
 	o = &cmds.Options{
