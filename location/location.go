@@ -29,7 +29,7 @@ func New(location ...string) ([]Location, error) {
 			} else {
 				location = Location{IsFileSystem: false, Path: item}
 			}
-			err := loadSqlFile(location)
+			err := loadSqlFile(&location)
 			if err != nil {
 				return locations, err
 			}
@@ -39,7 +39,7 @@ func New(location ...string) ([]Location, error) {
 	return locations, nil
 }
 
-func loadSqlFile(location Location) error {
+func loadSqlFile(location *Location) error {
 	if location.Sqls == nil {
 		location.Sqls = make([]SqlFile, 0)
 	}
@@ -49,30 +49,38 @@ func loadSqlFile(location Location) error {
 	}
 	defer file.Close()
 	err = filepath.Walk(location.Path, func(path string, info fs.FileInfo, err error) error {
-		if !info.IsDir() && info.Mode().String() == "sql" {
-			name := info.Name()
-			if !strings.HasPrefix(name, "V") && !strings.HasPrefix(name, "R") {
-				return errors.New("sql file name must be V${version}__${description} or R${version}__${description}")
-			}
-			split := strings.Split(name, "__")
-			if len(split) != 2 {
-				return errors.New("sql file name must be V${version}__${description} or R${version}__${description}")
-			}
-			versionFull := split[0]
-			version := strings.ReplaceAll(versionFull, "_", ".")
-			abs, err := filepath.Abs(path)
-			if err != nil {
-				return err
-			}
-			sf := SqlFile{
-				Name:        name,
-				Path:        path,
-				AbsPath:     abs,
-				Version:     version,
-				Description: split[1],
-			}
-			location.Sqls = append(location.Sqls, sf)
+		if info.IsDir() {
+			return nil
 		}
+		ext := filepath.Ext(path)
+		if ext != ".sql" {
+			return nil
+		}
+		fileName := info.Name()
+		if !strings.HasPrefix(fileName, "V") && !strings.HasPrefix(fileName, "R") {
+			return errors.New("sql file name must be V${version}__${description} or R${version}__${description}")
+		}
+		mod := fileName[0:1]
+		fileName = fileName[1:]
+		split := strings.Split(fileName, "__")
+		if len(split) != 2 {
+			return errors.New("sql file name must be V${version}__${description} or R${version}__${description}")
+		}
+		versionFull := split[0]
+		version := strings.ReplaceAll(versionFull, "_", ".")
+		abs, err := filepath.Abs(path)
+		if err != nil {
+			return err
+		}
+		sf := SqlFile{
+			Name:        info.Name(),
+			Path:        path,
+			AbsPath:     abs,
+			Version:     version,
+			Mod:         mod,
+			Description: split[1],
+		}
+		location.Sqls = append(location.Sqls, sf)
 		return nil
 	})
 	if err != nil {
@@ -86,6 +94,7 @@ type SqlFile struct {
 	Name        string // 文件名
 	AbsPath     string // 绝对路径
 	Path        string // 相对路径
+	Mod         string
 	Version     string // 版本
 	Description string // 描述
 }

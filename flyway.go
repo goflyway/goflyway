@@ -21,29 +21,20 @@ func (f flyway) buildExecuteParam() (d database.Database, h *history.SchemaHisto
 	if err != nil {
 		return
 	}
-	schema, err := d.CurrentSchema()
-	if err != nil {
-		return
-	}
-	tableName := f.config.Table
-	if tableName == "" {
-		tableName = consts.DEFAULT_HISTORY_TABLE
-	}
-	table, err := schema.Table(tableName)
-	if err != nil {
-		return
-	}
-	h = history.New(d, table)
+	h, err = history.New(d, f.config.Table)
 	var locations []location.Location
-	if len(f.config.Locations) > 0 {
-		for _, item := range f.config.Locations {
-			ls, err2 := location.New(item)
-			if err2 != nil {
-				err = err2
-				return
-			}
-			locations = append(locations, ls...)
+	fls := f.config.Locations
+	if len(fls) == 0 {
+		// set default location
+		fls = append(fls, "db_migration")
+	}
+	for _, item := range fls {
+		ls, err2 := location.New(item)
+		if err2 != nil {
+			err = err2
+			return
 		}
+		locations = append(locations, ls...)
 	}
 	o = &cmds.Options{
 		Locations: locations,

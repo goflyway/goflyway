@@ -1,6 +1,9 @@
 package history
 
-import "github.com/jiangliuhong/go-flyway/database"
+import (
+	"github.com/jiangliuhong/go-flyway/consts"
+	"github.com/jiangliuhong/go-flyway/database"
+)
 
 type SchemaHistory struct {
 	Database database.Database
@@ -15,6 +18,17 @@ func (sh SchemaHistory) Create() error {
 	return sh.Table.Create()
 }
 
-func New(d database.Database, t database.Table) *SchemaHistory {
-	return &SchemaHistory{Database: d, Table: t}
+func New(d database.Database, tableName string) (*SchemaHistory, error) {
+	schema, err := d.CurrentSchema()
+	if err != nil {
+		return nil, err
+	}
+	if tableName == "" {
+		tableName = consts.DEFAULT_HISTORY_TABLE
+	}
+	table, err := schema.Table(tableName)
+	if err != nil {
+		return nil, err
+	}
+	return &SchemaHistory{Database: d, Table: table}, nil
 }
