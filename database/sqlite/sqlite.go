@@ -18,7 +18,7 @@ type sqlite struct {
 }
 
 func (d sqlite) CurrentSchema() (database.Schema, error) {
-	return &schema{Schema: "main", db: d.DB}, nil
+	return &schema{Schema: "main", db: d.DB, Database: d}, nil
 }
 
 func (d sqlite) Schema(name string) (database.Schema, error) {
@@ -30,8 +30,9 @@ func (d sqlite) Type() database.Type {
 }
 
 type schema struct {
-	db     *database.Session
-	Schema string
+	db       *database.Session
+	Schema   string
+	Database database.Database
 }
 
 func (s schema) Name() string {
@@ -44,13 +45,12 @@ func (s schema) Create() error {
 	return nil
 }
 func (s schema) Table(name string) (database.Table, error) {
-	return &table{db: s.db, Name: name, Schema: s}, nil
+	return &table{db: s.db, BaseTable: database.BaseTable{Name: name, Schema: s, Database: s.Database}}, nil
 }
 
 type table struct {
-	db     *database.Session
-	Name   string
-	Schema database.Schema
+	database.BaseTable
+	db *database.Session
 }
 
 func (t table) Exists() (bool, error) {
@@ -60,8 +60,4 @@ func (t table) Exists() (bool, error) {
 		return false, err
 	}
 	return count > 0, nil
-}
-
-func (t table) Create() error {
-	return nil
 }
