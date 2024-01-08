@@ -21,6 +21,10 @@ func (d sqlite) CurrentSchema() (database.Schema, error) {
 	return &schema{Schema: "main", db: d.DB, Database: d}, nil
 }
 
+func (d sqlite) CurrentUser() (string, error) {
+	return "main", nil
+}
+
 func (d sqlite) Schema(name string) (database.Schema, error) {
 	return nil, nil
 }
@@ -45,7 +49,7 @@ func (s schema) Create() error {
 	return nil
 }
 func (s schema) Table(name string) (database.Table, error) {
-	return &table{db: s.db, BaseTable: database.BaseTable{Name: name, Schema: s, Database: s.Database}}, nil
+	return &table{db: s.db, BaseTable: database.BaseTable{Table: name, Schema: s, Database: s.Database}}, nil
 }
 
 type table struct {
@@ -54,7 +58,7 @@ type table struct {
 }
 
 func (t table) Exists() (bool, error) {
-	sql := fmt.Sprintf(`select count(tbl_name) FROM %s.sqlite_master where type = 'table' and tbl_name = '%s'`, t.Schema.Name(), t.Name)
+	sql := fmt.Sprintf(`select count(tbl_name) FROM %s.sqlite_master where type = 'table' and tbl_name = '%s'`, t.Schema.Name(), t.Name())
 	count, err := t.db.Count(sql)
 	if err != nil {
 		return false, err

@@ -8,6 +8,7 @@ import (
 type Database interface {
 	Schema(name string) (Schema, error)
 	CurrentSchema() (Schema, error)
+	CurrentUser() (string, error)
 	Type() Type
 	Session() *Session
 }
@@ -22,6 +23,7 @@ type Schema interface {
 type Table interface {
 	Exists() (bool, error)
 	Create() error
+	Name() string
 }
 
 type Group map[Type]func(db *Session) (Database, error)
@@ -56,11 +58,11 @@ func (bd BaseDatabase) Session() *Session {
 type BaseTable struct {
 	Schema   Schema
 	Database Database
-	Name     string
+	Table    string
 }
 
 func (bt BaseTable) Create() error {
-	ddl, err := loadMetadataSql(bt.Database.Type(), bt.Schema.Name(), bt.Name)
+	ddl, err := loadMetadataSql(bt.Database.Type(), bt.Schema.Name(), bt.Table)
 	if err != nil {
 		return err
 	}
@@ -69,4 +71,8 @@ func (bt BaseTable) Create() error {
 		return err
 	}
 	return nil
+}
+
+func (bt BaseTable) Name() string {
+	return bt.Table
 }

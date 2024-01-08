@@ -25,6 +25,10 @@ func (m Migrate) Execute(database database.Database, schemaHistory *history.Sche
 			return err
 		}
 	}
+	err = schemaHistory.InitBaseLineRank()
+	if err != nil {
+		return err
+	}
 	for _, location := range options.Locations {
 		for _, sql := range location.Sqls {
 			fmt.Print(sql.Name)

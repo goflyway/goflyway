@@ -7,4 +7,7 @@ const (
 	DEFAULT_HISTORY_TABLE = "flyway_schema_history"
 
 	OS_FILE_PREFIX = "system::"
+
+	BASE_LINE_DESC = "<< Flyway Baseline >>"
+	BASE_LINE_TYPE = "BASELINE"
 )
