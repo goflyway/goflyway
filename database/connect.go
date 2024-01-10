@@ -24,8 +24,8 @@ func (s Session) Count(sql string, param ...any) (int, error) {
 	return count, nil
 }
 
-// ExecDDL 执行数据库变更语句
-func (s Session) ExecDDL(sql string, param ...any) error {
+// Exec 执行数据库语句
+func (s Session) Exec(sql string, param ...any) error {
 	_, err := s.db.Exec(sql, param...)
 	return err
 }
@@ -81,11 +81,21 @@ func (s Session) SelectOne(sql string, r interface{}, param ...any) (bool, error
 		return false, nil
 	}
 	item := maps[0]
-	sliceType := val.Type()
+	sliceType := val.Type().Elem()
 	for i := 0; i < sliceType.NumField(); i++ {
 		field := sliceType.Field(i)
-		mapVal := item[field.Name]
-		val.FieldByName(field.Name).Set(reflect.ValueOf(mapVal))
+		column := field.Tag.Get("column")
+		if column == "" {
+			column = field.Name
+		}
+		if mapVal, ok := item[column]; ok {
+			v := val.Elem().FieldByName(field.Name)
+			rv := reflect.ValueOf(mapVal)
+			if rv.Type().AssignableTo(v.Type()) {
+				v.Set(rv)
+			}
+		}
+
 	}
 	return true, nil
 }
@@ -109,8 +119,13 @@ func (s Session) SelectList(sql string, rList interface{}, param ...any) error {
 		instance := reflect.New(sliceType).Elem()
 		for i := 0; i < sliceType.NumField(); i++ {
 			field := sliceType.Field(i)
-			mapVal := item[field.Name]
-			instance.FieldByName(field.Name).Set(reflect.ValueOf(mapVal))
+			column := field.Tag.Get("column")
+			if column == "" {
+				column = field.Name
+			}
+			if mapVal, ok := item[column]; ok {
+				instance.FieldByName(field.Name).Set(reflect.ValueOf(mapVal))
+			}
 		}
 		sliceVal.Set(reflect.Append(sliceVal, instance))
 	}

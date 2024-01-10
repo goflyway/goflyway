@@ -11,7 +11,7 @@ type SchemaHistory struct {
 	Database     database.Database
 	Schema       database.Schema
 	Table        database.Table
-	BaseLineRank int
+	BaseLineRank int64
 }
 
 func (sh SchemaHistory) Exists() (bool, error) {
@@ -51,17 +51,11 @@ func (sh *SchemaHistory) InitBaseLineRank() error {
 	}
 	if !exist {
 		// 不存在新增一条
-		user, err := sh.Database.CurrentUser()
-		if err != nil {
-			return err
-		}
 		sd = SchemaData{
 			Version:       "1",
 			Description:   consts.BASE_LINE_DESC,
 			Type:          consts.BASE_LINE_TYPE,
 			Script:        consts.BASE_LINE_DESC,
-			InstalledBy:   user,
-			InstalledOn:   time.Now().Format("2006-01-02 15:04:05"),
 			ExecutionTime: 0,
 			Success:       true,
 		}
@@ -74,7 +68,7 @@ func (sh *SchemaHistory) InitBaseLineRank() error {
 	return nil
 }
 
-func (sh SchemaHistory) InsertData(sd SchemaData) (newRank int, err error) {
+func (sh SchemaHistory) InsertData(sd SchemaData) (newRank int64, err error) {
 	sql := sh.getBaseQuery() + ` where installed_rank > ? `
 	var querySd SchemaData
 	newRank = 1
@@ -86,6 +80,19 @@ func (sh SchemaHistory) InsertData(sd SchemaData) (newRank int, err error) {
 	if exist {
 		newRank = querySd.InstalledRank + 1
 	}
+	installedBy := sd.InstalledBy
+	if installedBy == "" {
+		user, err2 := sh.Database.CurrentUser()
+		if err2 != nil {
+			err = err2
+			return
+		}
+		installedBy = user
+	}
+	installedOn := sd.InstalledOn
+	if installedOn == "" {
+		installedOn = time.Now().Format(time.DateTime)
+	}
 	insertSql := fmt.Sprintf(`insert into %s.%s values (?,?,?,?,?,?,?,?,?,?)`,
 		sh.Schema.Name(), sh.Table.Name())
 	_, err = sh.Database.Session().Insert(insertSql,
@@ -95,11 +102,16 @@ func (sh SchemaHistory) InsertData(sd SchemaData) (newRank int, err error) {
 		sd.Type,
 		sd.Script,
 		sd.Checksum,
-		sd.InstalledBy,
-		sd.InstalledOn,
+		installedBy,
+		installedOn,
 		sd.ExecutionTime,
 		sd.Success)
 	return
+}
+
+func (sh SchemaHistory) UpdateSuccessAndTime(rank int64, success bool, et int64) error {
+	sql := fmt.Sprintf(`update %s.%s set success = ? , execution_time = ? where installed_rank = ? `, sh.Schema.Name(), sh.Table.Name())
+	return sh.Database.Session().Exec(sql, success, et, rank)
 }
 
 func (sh SchemaHistory) SelectVersion(version string) (*SchemaData, error) {
@@ -115,7 +127,7 @@ func (sh SchemaHistory) SelectVersion(version string) (*SchemaData, error) {
 	return nil, nil
 }
 
-func (sh SchemaHistory) GetLatestRank() (int, error) {
+func (sh SchemaHistory) GetLatestRank() (int64, error) {
 	sql := sh.getBaseQuery() + ` order by installed_rank desc limit 1`
 	var sd SchemaData
 	exists, err := sh.Database.Session().SelectOne(sql, &sd)

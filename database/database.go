@@ -66,7 +66,7 @@ func (bt BaseTable) Create() error {
 	if err != nil {
 		return err
 	}
-	err = bt.Database.Session().ExecDDL(ddl)
+	err = bt.Database.Session().Exec(ddl)
 	if err != nil {
 		return err
 	}

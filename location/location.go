@@ -1,8 +1,8 @@
 package location
 
 import (
-	"crypto/md5"
-	"encoding/hex"
+	"crypto/sha256"
+	"encoding/binary"
 	"errors"
 	"github.com/jiangliuhong/go-flyway/consts"
 	"io"
@@ -110,17 +110,37 @@ func (s SqlFile) Content() (string, error) {
 }
 
 // MD5 文件 MD5 值
-func (l SqlFile) MD5() (string, error) {
+//func (l SqlFile) MD5() (string, error) {
+//	file, err := os.Open(l.Path)
+//	if err != nil {
+//		return "", err
+//	}
+//	defer file.Close()
+//	hash := md5.New()
+//	_, err = io.Copy(hash, file)
+//	if err != nil {
+//		return "", err
+//	}
+//	m := hex.EncodeToString(hash.Sum(nil))
+//	return m, nil
+//}
+
+func (l SqlFile) CheckSum() (int64, error) {
 	file, err := os.Open(l.Path)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	defer file.Close()
-	hash := md5.New()
-	_, err = io.Copy(hash, file)
-	if err != nil {
-		return "", err
+	hash := sha256.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return 0, err
 	}
-	m := hex.EncodeToString(hash.Sum(nil))
-	return m, nil
+	hashSum := hash.Sum(nil)
+	var checksum uint64
+	if len(hashSum) >= 8 {
+		checksum = binary.BigEndian.Uint64(hashSum[:8])
+	} else {
+		return 0, errors.New("hash value length is less than 8 bytes")
+	}
+	return int64(checksum), nil
 }

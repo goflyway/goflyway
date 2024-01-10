@@ -10,4 +10,5 @@ const (
 
 	BASE_LINE_DESC = "<< Flyway Baseline >>"
 	BASE_LINE_TYPE = "BASELINE"
+	SQL_TYPE       = "SQL"
 )
