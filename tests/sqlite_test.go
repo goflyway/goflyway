@@ -11,7 +11,7 @@ func TestSqliteMigrate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	f, err := flyway.Open(database.SQLITE, db, &flyway.Config{})
+	f, err := flyway.Open(database.SQLITE, db, &flyway.Config{Locations: []string{"db_migration/sqlite"}})
 	if err != nil {
 		t.Fatal(err)
 	}
