@@ -15,12 +15,20 @@ const (
 	GAUSS
 )
 
+const (
+	T_MYSQL      = "mysql"      // mysql db
+	T_SQLITE     = "sqlite"     // sqlite db
+	T_POSTGRESQL = "postgresql" // postgresql db
+	T_DM         = "dm"         // dm ,dameng db
+	T_GAUSS      = "gauss"      // gauss db
+)
+
 func (t Type) String() string {
 	switch t {
 	case MYSQL:
-		return "mysql"
+		return T_MYSQL
 	case SQLITE:
-		return "sqlite"
+		return T_SQLITE
 	case POSTGRESQL:
 		return "postgresql"
 	case DM:
@@ -38,9 +46,9 @@ func TypeValueOf(name string) (Type, error) {
 	var e error
 	name = strings.ToLower(name)
 	switch name {
-	case "mysql":
+	case T_MYSQL:
 		t = MYSQL
-	case "sqlite":
+	case T_SQLITE:
 		t = SQLITE
 	//case "postgresql":
 	//	t = POSTGRESQL
