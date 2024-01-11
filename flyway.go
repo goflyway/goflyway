@@ -50,9 +50,13 @@ func (f flyway) Migrate() error {
 	return cmds.Execute(consts.CMD_NAME_MIGRATE, d, h, o)
 }
 
-func Open(databaseType database.Type, db *sql.DB, config *Config) (*flyway, error) {
+func Open(databaseType string, db *sql.DB, config *Config) (*flyway, error) {
+	dbType, err := database.TypeValueOf(databaseType)
+	if err != nil {
+		return nil, err
+	}
 	f := &flyway{
-		databaseType: databaseType,
+		databaseType: dbType,
 		config:       *config,
 		db:           db,
 	}
