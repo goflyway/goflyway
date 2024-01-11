@@ -68,6 +68,18 @@ func (s Session) Select(sql string, param ...any) ([]map[string]interface{}, err
 	return list, nil
 }
 
+func (s Session) SelectOneForMap(sql string, param ...any) (map[string]interface{}, error) {
+	list, err := s.Select(sql, param...)
+	if err != nil {
+		return nil, err
+	}
+	if len(list) > 0 {
+		return list[0], nil
+	} else {
+		return nil, nil
+	}
+}
+
 func (s Session) SelectOne(sql string, r interface{}, param ...any) (bool, error) {
 	val := reflect.ValueOf(r)
 	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {

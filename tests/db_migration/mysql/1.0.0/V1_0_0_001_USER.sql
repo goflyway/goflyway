@@ -1,4 +1,4 @@
-create table catalog.user
+create table user
 (
     id     int NOT NULL AUTO_INCREMENT ,
     name    varchar(30) not null,

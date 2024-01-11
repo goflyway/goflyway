@@ -18,7 +18,7 @@ type sqlite struct {
 }
 
 func (d sqlite) CurrentSchema() (database.Schema, error) {
-	return &schema{Schema: "main", db: d.DB, Database: d}, nil
+	return &sqliteSchema{Schema: "main", db: d.DB, Database: d}, nil
 }
 
 func (d sqlite) CurrentUser() (string, error) {
@@ -33,31 +33,31 @@ func (d sqlite) Type() database.Type {
 	return database.SQLITE
 }
 
-type schema struct {
+type sqliteSchema struct {
 	db       *database.Session
 	Schema   string
 	Database database.Database
 }
 
-func (s schema) Name() string {
+func (s sqliteSchema) Name() string {
 	return s.Schema
 }
-func (s schema) Exists() (bool, error) {
+func (s sqliteSchema) Exists() (bool, error) {
 	return true, nil
 }
-func (s schema) Create() error {
+func (s sqliteSchema) Create() error {
 	return nil
 }
-func (s schema) Table(name string) (database.Table, error) {
-	return &table{db: s.db, BaseTable: database.BaseTable{Table: name, Schema: s, Database: s.Database}}, nil
+func (s sqliteSchema) Table(name string) (database.Table, error) {
+	return &sqliteTable{db: s.db, BaseTable: database.BaseTable{Table: name, Schema: s, Database: s.Database}}, nil
 }
 
-type table struct {
+type sqliteTable struct {
 	database.BaseTable
 	db *database.Session
 }
 
-func (t table) Exists() (bool, error) {
+func (t sqliteTable) Exists() (bool, error) {
 	sql := fmt.Sprintf(`select count(tbl_name) FROM %s.sqlite_master where type = 'table' and tbl_name = '%s'`, t.Schema.Name(), t.Name())
 	count, err := t.db.Count(sql)
 	if err != nil {
