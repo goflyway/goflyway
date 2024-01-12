@@ -11,5 +11,3 @@ CREATE TABLE "{{.schema}}"."{{.table}}"
     "execution_time" INT           NOT NULL,
     "success"        BOOLEAN       NOT NULL
 );
-
-CREATE INDEX "{{.schema}}"."{{.table}}_s_idx" ON "{{.table}}" ("success");

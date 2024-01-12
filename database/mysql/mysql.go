@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"errors"
-	"fmt"
 	"github.com/jiangliuhong/go-flyway/database"
 	"reflect"
 )
@@ -57,7 +56,7 @@ func (m mysql) Schema(name string) (database.Schema, error) {
 }
 
 func (m mysql) Type() database.Type {
-	return database.SQLITE
+	return database.MYSQL
 }
 
 type mysqlSchema struct {
@@ -85,8 +84,8 @@ type mysqlTable struct {
 }
 
 func (t mysqlTable) Exists() (bool, error) {
-	sql := fmt.Sprintf(`select count(tbl_name) FROM %s.sqlite_master where type = 'table' and tbl_name = '%s'`, t.Schema.Name(), t.Name())
-	count, err := t.db.Count(sql)
+	sql := `select count(TABLE_NAME) FROM information_schema.tables where TABLE_SCHEMA = ? and TABLE_NAME = ?`
+	count, err := t.db.Count(sql, t.Schema.Name(), t.Name())
 	if err != nil {
 		return false, err
 	}

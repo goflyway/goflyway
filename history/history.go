@@ -69,7 +69,7 @@ func (sh *SchemaHistory) InitBaseLineRank() error {
 }
 
 func (sh SchemaHistory) InsertData(sd SchemaData) (newRank int64, err error) {
-	sql := sh.getBaseQuery() + ` where installed_rank > ? `
+	sql := sh.getBaseQuery() + ` where installed_rank >= ? `
 	var querySd SchemaData
 	newRank = 1
 	exist, err := sh.Database.Session().SelectOne(sql, &querySd, sh.BaseLineRank)
