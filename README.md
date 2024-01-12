@@ -21,8 +21,9 @@ import (
 	"github.com/jiangliuhong/go-flyway/database"
 )
 func main(){
-    db, _ := sql.Open("sqlite3", "./flyway_test.db")
-    f, _ := flyway.Open(database.SQLITE, db, &flyway.Config{Locations:[]string{"db_migration"}})
+    db, _ := sql.Open("sqlite3", "./flyway_test.db") 
+	// use database.T_SQLITE 、 database.T_MYSQL or "sqlite","mysql"
+    f, _ := flyway.Open(database.T_SQLITE, db, &flyway.Config{Locations:[]string{"db_migration"}})
     f.Migrate()
 }
 ```
