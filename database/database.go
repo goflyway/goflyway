@@ -18,6 +18,8 @@ type Schema interface {
 	Exists() (bool, error)
 	Create() error
 	Table(name string) (Table, error)
+	// Empty schema is empty
+	Empty() (bool, error)
 }
 
 type Table interface {
@@ -75,4 +77,25 @@ func (bt BaseTable) Create() error {
 
 func (bt BaseTable) Name() string {
 	return bt.Table
+}
+
+type BaseSchema struct {
+	Schema string
+}
+
+func (bs BaseSchema) Name() string {
+	return bs.Schema
+
+}
+func (bs BaseSchema) Exists() (bool, error) {
+	return false, nil
+}
+func (bs BaseSchema) Create() error {
+	return nil
+}
+func (bs BaseSchema) Table(name string) (Table, error) {
+	return nil, nil
+}
+func (bs BaseSchema) Empty() (bool, error) {
+	return false, nil
 }

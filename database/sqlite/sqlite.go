@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"errors"
 	"fmt"
 	"github.com/jiangliuhong/go-flyway/database"
 )
@@ -18,7 +19,11 @@ type sqlite struct {
 }
 
 func (d sqlite) CurrentSchema() (database.Schema, error) {
-	return &sqliteSchema{Schema: "main", db: d.DB, Database: d}, nil
+	return &sqliteSchema{
+		BaseSchema: database.BaseSchema{Schema: "main"},
+		db:         d.DB,
+		Database:   d,
+	}, nil
 }
 
 func (d sqlite) CurrentUser() (string, error) {
@@ -34,22 +39,28 @@ func (d sqlite) Type() database.Type {
 }
 
 type sqliteSchema struct {
+	database.BaseSchema
 	db       *database.Session
-	Schema   string
 	Database database.Database
 }
 
-func (s sqliteSchema) Name() string {
-	return s.Schema
-}
 func (s sqliteSchema) Exists() (bool, error) {
 	return true, nil
 }
 func (s sqliteSchema) Create() error {
-	return nil
+	return errors.New("sqlite does not support schema creation")
 }
 func (s sqliteSchema) Table(name string) (database.Table, error) {
 	return &sqliteTable{db: s.db, BaseTable: database.BaseTable{Table: name, Schema: s, Database: s.Database}}, nil
+}
+
+func (s sqliteSchema) Empty() (bool, error) {
+	sql := fmt.Sprintf(`select count(name) from %s.sqlite_master `, s.Name())
+	count, err := s.db.Count(sql)
+	if err != nil {
+		return false, err
+	}
+	return count == 0, nil
 }
 
 type sqliteTable struct {
