@@ -12,6 +12,12 @@ type SchemaHistory struct {
 	Schema       database.Schema
 	Table        database.Table
 	BaseLineRank int64
+	Config       SchemaHistoryConfig
+}
+
+type SchemaHistoryConfig struct {
+	TableName         string
+	BaselineOnMigrate bool
 }
 
 func (sh SchemaHistory) Exists() (bool, error) {
@@ -22,19 +28,23 @@ func (sh SchemaHistory) Create() error {
 	return sh.Table.Create()
 }
 
-func New(d database.Database, tableName string) (*SchemaHistory, error) {
+func New(d database.Database, c SchemaHistoryConfig) (*SchemaHistory, error) {
 	schema, err := d.CurrentSchema()
 	if err != nil {
 		return nil, err
 	}
-	if tableName == "" {
-		tableName = consts.DEFAULT_HISTORY_TABLE
+	if c.TableName == "" {
+		c.TableName = consts.DEFAULT_HISTORY_TABLE
 	}
-	table, err := schema.Table(tableName)
+	table, err := schema.Table(c.TableName)
 	if err != nil {
 		return nil, err
 	}
-	return &SchemaHistory{Database: d, Schema: schema, Table: table}, nil
+	return &SchemaHistory{Database: d,
+		Schema: schema,
+		Table:  table,
+		Config: c,
+	}, nil
 }
 
 func (sh SchemaHistory) getBaseQuery() string {
@@ -42,7 +52,10 @@ func (sh SchemaHistory) getBaseQuery() string {
 }
 
 func (sh *SchemaHistory) InitBaseLineRank() error {
-
+	if !sh.Config.BaselineOnMigrate {
+		sh.BaseLineRank = 0
+		return nil
+	}
 	querySql := sh.getBaseQuery() + ` where type = ? `
 	var sd SchemaData
 	exist, err := sh.Database.Session().SelectOne(querySql, &sd, consts.BASE_LINE_TYPE)
@@ -50,20 +63,28 @@ func (sh *SchemaHistory) InitBaseLineRank() error {
 		return err
 	}
 	if !exist {
-		// 不存在新增一条
-		sd = SchemaData{
-			Version:       "1",
-			Description:   consts.BASE_LINE_DESC,
-			Type:          consts.BASE_LINE_TYPE,
-			Script:        consts.BASE_LINE_DESC,
-			ExecutionTime: 0,
-			Success:       true,
-		}
-		rank, err := sh.InsertData(sd)
+		// 不存在判断是否为空库，空库则新增一条
+		empty, err := sh.Schema.Empty()
 		if err != nil {
 			return err
 		}
-		sh.BaseLineRank = rank
+		if empty {
+			sh.BaseLineRank = 0
+		} else {
+			sd = SchemaData{
+				Version:       "1",
+				Description:   consts.BASE_LINE_DESC,
+				Type:          consts.BASE_LINE_TYPE,
+				Script:        consts.BASE_LINE_DESC,
+				ExecutionTime: 0,
+				Success:       true,
+			}
+			rank, err := sh.InsertData(sd)
+			if err != nil {
+				return err
+			}
+			sh.BaseLineRank = rank
+		}
 	}
 	return nil
 }

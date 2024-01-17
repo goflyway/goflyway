@@ -88,7 +88,7 @@ func (s mysqlSchema) Empty() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return count > 0, nil
+	return count == 0, nil
 }
 
 type mysqlTable struct {

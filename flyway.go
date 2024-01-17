@@ -21,7 +21,10 @@ func (f flyway) buildExecuteParam() (d database.Database, h *history.SchemaHisto
 	if err != nil {
 		return
 	}
-	h, err = history.New(d, f.config.Table)
+	h, err = history.New(d, history.SchemaHistoryConfig{
+		TableName:         f.config.Table,
+		BaselineOnMigrate: f.config.BaselineOnMigrate,
+	})
 	var locations []location.Location
 	fls := f.config.Locations
 	if len(fls) == 0 {
@@ -67,6 +70,6 @@ type Config struct {
 	Locations         []string
 	Table             string
 	BaselineOnMigrate bool
-	CleanDisabled     bool
-	OutOfOrder        bool
+	//CleanDisabled     bool
+	//OutOfOrder        bool
 }
