@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"errors"
+	"fmt"
 	"github.com/jiangliuhong/go-flyway/database"
 	"reflect"
 )
@@ -32,7 +33,7 @@ func (m mysql) CurrentSchema() (database.Schema, error) {
 		return nil, errors.New("current database is " + reflect.TypeOf(currdb).Kind().String() + " , not String")
 	}
 	currdbStr := currdb.(string)
-	return &mysqlSchema{Schema: currdbStr, db: m.DB, Database: m}, nil
+	return &mysqlSchema{BaseSchema: database.BaseSchema{Schema: currdbStr}, db: m.DB, Database: m}, nil
 }
 
 func (m mysql) CurrentUser() (string, error) {
@@ -60,22 +61,34 @@ func (m mysql) Type() database.Type {
 }
 
 type mysqlSchema struct {
+	database.BaseSchema
 	db       *database.Session
-	Schema   string
 	Database database.Database
 }
 
-func (s mysqlSchema) Name() string {
-	return s.Schema
-}
 func (s mysqlSchema) Exists() (bool, error) {
-	return true, nil
+	sql := `select count(SCHEMA_NAME) from information_schema.SCHEMATA where SCHEMA_NAME = ?`
+	count, err := s.db.Count(sql, s.Name())
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
 func (s mysqlSchema) Create() error {
-	return nil
+	sql := fmt.Sprintf(`create database ? `, s.Name())
+	return s.db.Exec(sql)
 }
 func (s mysqlSchema) Table(name string) (database.Table, error) {
 	return &mysqlTable{db: s.db, BaseTable: database.BaseTable{Table: name, Schema: s, Database: s.Database}}, nil
+}
+
+func (s mysqlSchema) Empty() (bool, error) {
+	sql := `select count(TABLE_NAME) from information_schema.tables where TABLE_SCHEMA = ?`
+	count, err := s.db.Count(sql, s.Name())
+	if err != nil {
+		return false, err
+	}
+	return count == 0, nil
 }
 
 type mysqlTable struct {

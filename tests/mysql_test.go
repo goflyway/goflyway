@@ -11,7 +11,10 @@ func TestMysqlMigrate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	f, err := flyway.Open(database.T_MYSQL, db, &flyway.Config{Locations: []string{"db_migration/mysql"}})
+	f, err := flyway.Open(database.T_MYSQL, db, &flyway.Config{
+		Locations:         []string{"db_migration/mysql"},
+		BaselineOnMigrate: true,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
