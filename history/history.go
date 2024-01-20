@@ -1,9 +1,10 @@
 package history
 
 import (
+	"errors"
 	"fmt"
-	"github.com/jiangliuhong/go-flyway/consts"
-	"github.com/jiangliuhong/go-flyway/database"
+	"github.com/goflyway/goflyway/consts"
+	"github.com/goflyway/goflyway/database"
 	"time"
 )
 
@@ -18,6 +19,7 @@ type SchemaHistory struct {
 type SchemaHistoryConfig struct {
 	TableName         string
 	BaselineOnMigrate bool
+	DefaultSchema     string
 }
 
 func (sh SchemaHistory) Exists() (bool, error) {
@@ -29,12 +31,9 @@ func (sh SchemaHistory) Create() error {
 }
 
 func New(d database.Database, c SchemaHistoryConfig) (*SchemaHistory, error) {
-	schema, err := d.CurrentSchema()
+	schema, err := defaultSchema(d, c.DefaultSchema)
 	if err != nil {
 		return nil, err
-	}
-	if c.TableName == "" {
-		c.TableName = consts.DEFAULT_HISTORY_TABLE
 	}
 	table, err := schema.Table(c.TableName)
 	if err != nil {
@@ -45,6 +44,32 @@ func New(d database.Database, c SchemaHistoryConfig) (*SchemaHistory, error) {
 		Table:  table,
 		Config: c,
 	}, nil
+}
+
+// defaultSchema 获取默认的模式，并校验模式是否存在
+func defaultSchema(d database.Database, name string) (database.Schema, error) {
+	var schema database.Schema
+	if name != "" {
+		s, err := d.Schema(name)
+		if err != nil {
+			return nil, err
+		}
+		schema = s
+	} else {
+		s, err := d.CurrentSchema()
+		if err != nil {
+			return nil, err
+		}
+		schema = s
+	}
+	schemaExist, err := schema.Exists()
+	if err != nil {
+		return nil, err
+	}
+	if !schemaExist {
+		return nil, errors.New(fmt.Sprintf("schema %s does not exist", schema.Name()))
+	}
+	return schema, nil
 }
 
 func (sh SchemaHistory) getBaseQuery() string {

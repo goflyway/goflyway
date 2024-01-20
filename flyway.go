@@ -2,12 +2,10 @@ package flyway
 
 import (
 	"database/sql"
-	"github.com/jiangliuhong/go-flyway/cmds"
-	"github.com/jiangliuhong/go-flyway/consts"
-	"github.com/jiangliuhong/go-flyway/database"
-	"github.com/jiangliuhong/go-flyway/history"
-	_ "github.com/jiangliuhong/go-flyway/init"
-	"github.com/jiangliuhong/go-flyway/location"
+	"github.com/goflyway/goflyway/command"
+	"github.com/goflyway/goflyway/consts"
+	"github.com/goflyway/goflyway/database"
+	_ "github.com/goflyway/goflyway/init"
 )
 
 type flyway struct {
@@ -16,45 +14,20 @@ type flyway struct {
 	db           *sql.DB
 }
 
-func (f flyway) buildExecuteParam() (d database.Database, h *history.SchemaHistory, o *cmds.Options, err error) {
-	d, err = database.New(f.databaseType, f.db)
-	if err != nil {
-		return
-	}
-	h, err = history.New(d, history.SchemaHistoryConfig{
-		TableName:         f.config.Table,
-		BaselineOnMigrate: f.config.BaselineOnMigrate,
-	})
-	var locations []location.Location
-	fls := f.config.Locations
-	if len(fls) == 0 {
-		// set default location
-		fls = append(fls, "db_migration")
-	}
-	for _, item := range fls {
-		ls, err2 := location.New(item)
-		if err2 != nil {
-			err = err2
-			return
-		}
-		locations = append(locations, ls...)
-	}
-	o = &cmds.Options{
-		Locations: locations,
-	}
-	return
-}
-
-func (f flyway) Migrate() error {
-	d, h, o, err := f.buildExecuteParam()
+func (f *flyway) Migrate() error {
+	ctx, err := buildCommandCtx(consts.CMD_NAME_MIGRATE, f)
 	if err != nil {
 		return err
 	}
-	return cmds.Execute(consts.CMD_NAME_MIGRATE, d, h, o)
+	return command.Execute(ctx)
 }
 
 func Open(databaseType string, db *sql.DB, config *Config) (*flyway, error) {
 	dbType, err := database.TypeValueOf(databaseType)
+	if err != nil {
+		return nil, err
+	}
+	err = configBuild(config)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +42,10 @@ func Open(databaseType string, db *sql.DB, config *Config) (*flyway, error) {
 type Config struct {
 	Locations         []string
 	Table             string
-	BaselineOnMigrate bool
-	//CleanDisabled     bool
-	//OutOfOrder        bool
+	BaselineOnMigrate bool     // 是否使用基线迁移
+	Schemas           []string // 连接的模式列表
+	CreateSchemas     bool     // 是否创建 Schemas 指定的模式
+	DefaultSchema     string   // 默认的模式，为空时，默认为数据库连接的默认模式，如果指定了 Schemas 则取第一个为默认模式
+	CleanDisabled     bool     // 为ture时，会清空 Schemas 下所有表
+	OutOfOrder        bool     // 是否允许版本乱序运行，为ture时，如果已经应用了1.0和3.0版本，现在发现了2.0版本，那么它也将被应用，而不是被忽略。
 }

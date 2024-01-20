@@ -6,7 +6,6 @@ services:
     ports:
       - "9910:3306"
     environment:
-      - MYSQL_DATABASE=goflyway
-      - MYSQL_USER=goflyway
-      - MYSQL_PASSWORD=goflyway
-      - MYSQL_RANDOM_ROOT_PASSWORD="yes"
+      MYSQL_DATABASE: goflyway
+      MYSQL_ROOT_PASSWORD: goflyway
+      MYSQL_ROOT_HOST: "%"

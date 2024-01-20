@@ -1,12 +1,12 @@
-package cmds
+package command
 
 import (
 	"errors"
 	"fmt"
-	"github.com/jiangliuhong/go-flyway/consts"
-	"github.com/jiangliuhong/go-flyway/database"
-	"github.com/jiangliuhong/go-flyway/history"
-	"github.com/jiangliuhong/go-flyway/location"
+	"github.com/goflyway/goflyway/consts"
+	"github.com/goflyway/goflyway/database"
+	"github.com/goflyway/goflyway/history"
+	"github.com/goflyway/goflyway/location"
 	"time"
 )
 
@@ -17,24 +17,24 @@ func init() {
 type Migrate struct {
 }
 
-func (m Migrate) Execute(database database.Database, schemaHistory *history.SchemaHistory, options *Options) error {
-	exists, err := schemaHistory.Exists()
+func (m Migrate) Execute(ctx *Context) error {
+	exists, err := ctx.SchemaHistory.Exists()
 	if err != nil {
 		return err
 	}
 	if !exists {
-		err = schemaHistory.Create()
+		err = ctx.SchemaHistory.Create()
 		if err != nil {
 			return err
 		}
 	}
-	err = schemaHistory.InitBaseLineRank()
+	err = ctx.SchemaHistory.InitBaseLineRank()
 	if err != nil {
 		return err
 	}
-	for _, l := range options.Locations {
+	for _, l := range ctx.Options.Locations {
 		for _, sql := range l.Sqls {
-			err = m.invokeSql(database, schemaHistory, sql)
+			err = m.invokeSql(ctx.Database, ctx.SchemaHistory, sql)
 			if err != nil {
 				return errors.New(fmt.Sprintf("Failed to execute the SQL file:%s\nerror:%s", sql.Path, err.Error()))
 			}

@@ -11,5 +11,5 @@ func ConnSqlite() (*sql.DB, error) {
 }
 
 func ConnectMysql() (*sql.DB, error) {
-	return sql.Open("mysql", "goflyway:goflyway@tcp(localhost:9910)/goflyway?charset=utf8")
+	return sql.Open("mysql", "root:goflyway@tcp(localhost:9910)/goflyway?charset=utf8")
 }

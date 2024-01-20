@@ -3,7 +3,7 @@ package sqlite
 import (
 	"errors"
 	"fmt"
-	"github.com/jiangliuhong/go-flyway/database"
+	"github.com/goflyway/goflyway/database"
 )
 
 func init() {
@@ -31,7 +31,11 @@ func (d sqlite) CurrentUser() (string, error) {
 }
 
 func (d sqlite) Schema(name string) (database.Schema, error) {
-	return nil, nil
+	return &sqliteSchema{
+		BaseSchema: database.BaseSchema{Schema: name},
+		db:         d.DB,
+		Database:   d,
+	}, nil
 }
 
 func (d sqlite) Type() database.Type {

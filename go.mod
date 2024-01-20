@@ -1,3 +1,3 @@
-module github.com/jiangliuhong/go-flyway
+module github.com/goflyway/goflyway
 
 go 1.20
