@@ -27,6 +27,10 @@ func Open(databaseType string, db *sql.DB, config *Config) (*flyway, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = configBuild(config)
+	if err != nil {
+		return nil, err
+	}
 	f := &flyway{
 		databaseType: dbType,
 		config:       *config,

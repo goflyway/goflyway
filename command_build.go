@@ -32,12 +32,7 @@ func buildCommandCtx(commandName string, f *flyway) (*command.Context, error) {
 		DefaultSchema:     defaultSchema,
 	})
 	var locations []location.Location
-	fls := f.config.Locations
-	if len(fls) == 0 {
-		// set default location
-		fls = append(fls, "db_migration")
-	}
-	for _, item := range fls {
+	for _, item := range f.config.Locations {
 		ls, err2 := location.New(item)
 		if err2 != nil {
 			err = err2
