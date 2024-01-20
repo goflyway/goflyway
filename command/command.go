@@ -1,7 +1,8 @@
-package cmds
+package command
 
 import (
 	"errors"
+	"fmt"
 	"github.com/jiangliuhong/go-flyway/database"
 	"github.com/jiangliuhong/go-flyway/history"
 	"github.com/jiangliuhong/go-flyway/location"
@@ -11,7 +12,15 @@ type Command interface {
 	// Execute 执行命令
 	// schemaHistory 历史纪录
 	// options 执行参数
-	Execute(database database.Database, schemaHistory *history.SchemaHistory, options *Options) error
+	Execute(ctx *Context) error
+}
+
+// Context 执行命令的上下文对象
+type Context struct {
+	Command       string
+	Database      database.Database
+	SchemaHistory *history.SchemaHistory
+	Options       *Options
 }
 
 var commands = map[string]Command{}
@@ -24,10 +33,11 @@ type Options struct {
 	Locations []location.Location // 文件信息
 }
 
-func Execute(command string, database database.Database, schemaHistory *history.SchemaHistory, options *Options) error {
-	cmd, ok := commands[command]
+// Execute 执行命令
+func Execute(ctx *Context) error {
+	cmd, ok := commands[ctx.Command]
 	if !ok {
-		return errors.New("not found " + command + " command")
+		return errors.New(fmt.Sprintf("not found %s command", ctx.Command))
 	}
-	return cmd.Execute(database, schemaHistory, options)
+	return cmd.Execute(ctx)
 }
