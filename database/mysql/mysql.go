@@ -53,7 +53,12 @@ func (m mysql) CurrentUser() (string, error) {
 }
 
 func (m mysql) Schema(name string) (database.Schema, error) {
-	return nil, nil
+	return &mysqlSchema{BaseSchema: database.BaseSchema{
+		Schema: name,
+	},
+		db:       m.DB,
+		Database: m,
+	}, nil
 }
 
 func (m mysql) Type() database.Type {
@@ -75,7 +80,7 @@ func (s mysqlSchema) Exists() (bool, error) {
 	return count > 0, nil
 }
 func (s mysqlSchema) Create() error {
-	sql := fmt.Sprintf(`create database ? `, s.Name())
+	sql := fmt.Sprintf(`create database %s `, s.Name())
 	return s.db.Exec(sql)
 }
 func (s mysqlSchema) Table(name string) (database.Table, error) {
