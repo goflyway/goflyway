@@ -1,6 +1,6 @@
 # GO flyway
 
-![GitHub License](https://img.shields.io/github/license/jiangliuhong/go-flyway)
+![GitHub License](https://img.shields.io/github/license/goflyway/goflyway)
 [![Static Badge](https://img.shields.io/badge/go.dev-reference-blue?style=flat)](https://pkg.go.dev/github.com/goflyway/goflyway)
 
 ## 安装
