@@ -3,9 +3,9 @@ package command
 import (
 	"errors"
 	"fmt"
-	"github.com/jiangliuhong/go-flyway/database"
-	"github.com/jiangliuhong/go-flyway/history"
-	"github.com/jiangliuhong/go-flyway/location"
+	"github.com/goflyway/goflyway/database"
+	"github.com/goflyway/goflyway/history"
+	"github.com/goflyway/goflyway/location"
 )
 
 type Command interface {

@@ -3,10 +3,10 @@ package command
 import (
 	"errors"
 	"fmt"
-	"github.com/jiangliuhong/go-flyway/consts"
-	"github.com/jiangliuhong/go-flyway/database"
-	"github.com/jiangliuhong/go-flyway/history"
-	"github.com/jiangliuhong/go-flyway/location"
+	"github.com/goflyway/goflyway/consts"
+	"github.com/goflyway/goflyway/database"
+	"github.com/goflyway/goflyway/history"
+	"github.com/goflyway/goflyway/location"
 	"time"
 )
 

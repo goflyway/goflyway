@@ -2,10 +2,10 @@ package flyway
 
 import (
 	"database/sql"
-	"github.com/jiangliuhong/go-flyway/command"
-	"github.com/jiangliuhong/go-flyway/consts"
-	"github.com/jiangliuhong/go-flyway/database"
-	_ "github.com/jiangliuhong/go-flyway/init"
+	"github.com/goflyway/goflyway/command"
+	"github.com/goflyway/goflyway/consts"
+	"github.com/goflyway/goflyway/database"
+	_ "github.com/goflyway/goflyway/init"
 )
 
 type flyway struct {

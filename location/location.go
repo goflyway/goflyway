@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
-	"github.com/jiangliuhong/go-flyway/consts"
+	"github.com/goflyway/goflyway/consts"
 	"io"
 	"io/fs"
 	"os"
@@ -23,8 +23,8 @@ func New(location ...string) ([]Location, error) {
 	if len(location) > 0 {
 		for _, item := range location {
 			var location Location
-			if strings.Index(item, consts.OS_FILE_PREFIX) == 0 {
-				path := item[len(consts.OS_FILE_PREFIX):]
+			if strings.Index(item, consts.LOCATION_PREFIX_OS) == 0 {
+				path := item[len(consts.LOCATION_PREFIX_OS):]
 				location = Location{IsFileSystem: true, Path: path}
 			} else {
 				location = Location{IsFileSystem: false, Path: item}

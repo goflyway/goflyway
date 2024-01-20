@@ -3,8 +3,8 @@ package history
 import (
 	"errors"
 	"fmt"
-	"github.com/jiangliuhong/go-flyway/consts"
-	"github.com/jiangliuhong/go-flyway/database"
+	"github.com/goflyway/goflyway/consts"
+	"github.com/goflyway/goflyway/database"
 	"time"
 )
 
@@ -66,7 +66,7 @@ func defaultSchema(d database.Database, name string) (database.Schema, error) {
 	if err != nil {
 		return nil, err
 	}
-	if schemaExist {
+	if !schemaExist {
 		return nil, errors.New(fmt.Sprintf("schema %s does not exist", schema.Name()))
 	}
 	return schema, nil

@@ -1,11 +1,11 @@
 package flyway
 
 import (
-	"github.com/jiangliuhong/go-flyway/command"
-	"github.com/jiangliuhong/go-flyway/database"
-	"github.com/jiangliuhong/go-flyway/history"
-	"github.com/jiangliuhong/go-flyway/location"
-	"github.com/jiangliuhong/go-flyway/utils"
+	"github.com/goflyway/goflyway/command"
+	"github.com/goflyway/goflyway/database"
+	"github.com/goflyway/goflyway/history"
+	"github.com/goflyway/goflyway/location"
+	"github.com/goflyway/goflyway/utils"
 )
 
 // buildFlyway 构建flyway对象
@@ -26,11 +26,15 @@ func buildCommandCtx(commandName string, f *flyway) (*command.Context, error) {
 	if len(f.config.Schemas) > 0 {
 		defaultSchema = utils.StringIfNull(defaultSchema, f.config.Schemas[0])
 	}
-	ctx.SchemaHistory, err = history.New(ctx.Database, history.SchemaHistoryConfig{
+	s, err := history.New(ctx.Database, history.SchemaHistoryConfig{
 		TableName:         f.config.Table,
 		BaselineOnMigrate: f.config.BaselineOnMigrate,
 		DefaultSchema:     defaultSchema,
 	})
+	if err != nil {
+		return ctx, err
+	}
+	ctx.SchemaHistory = s
 	var locations []location.Location
 	for _, item := range f.config.Locations {
 		ls, err2 := location.New(item)

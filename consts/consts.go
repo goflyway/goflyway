@@ -6,7 +6,9 @@ const (
 
 	DEFAULT_HISTORY_TABLE = "flyway_schema_history"
 
-	OS_FILE_PREFIX = "system::"
+	LOCATION_PREFIX_SEQ = "::"
+	LOCATION_PREFIX_OS  = "system" + LOCATION_PREFIX_SEQ
+	LOCATION_DEFAULT    = "db_migration"
 
 	BASE_LINE_DESC = "<< Flyway Baseline >>"
 	BASE_LINE_TYPE = "BASELINE"

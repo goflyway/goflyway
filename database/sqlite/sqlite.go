@@ -3,7 +3,7 @@ package sqlite
 import (
 	"errors"
 	"fmt"
-	"github.com/jiangliuhong/go-flyway/database"
+	"github.com/goflyway/goflyway/database"
 )
 
 func init() {

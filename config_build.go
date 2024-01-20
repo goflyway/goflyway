@@ -1,5 +1,12 @@
 package flyway
 
+import (
+	"errors"
+	"fmt"
+	"github.com/goflyway/goflyway/consts"
+	"strings"
+)
+
 type configCallback func(c *Config) error
 type configCallbackContain []configCallback
 
@@ -12,6 +19,7 @@ func (c *configCallbackContain) Registry(f func(c *Config) error) {
 func configBuild(c *Config) error {
 	var callbacks configCallbackContain
 	// 注册处理器
+	callbacks.Registry(configDefaultValCallback)
 	callbacks.Registry(configLocationCallback)
 	callbacks.Registry(configSchemaCallback)
 	// 执行处理
@@ -24,10 +32,34 @@ func configBuild(c *Config) error {
 	return nil
 }
 
-func configLocationCallback(c *Config) error {
+func configDefaultValCallback(c *Config) error {
+	if c.Table == "" {
+		c.Table = consts.DEFAULT_HISTORY_TABLE
+	}
 	if len(c.Locations) == 0 {
 		// set default location
-		c.Locations = append(c.Locations, "db_migration")
+		c.Locations = append(c.Locations, consts.LOCATION_DEFAULT)
+	}
+	return nil
+}
+
+// 处理location值
+func configLocationCallback(c *Config) error {
+	prefixList := []string{consts.LOCATION_PREFIX_OS}
+	for _, l := range c.Locations {
+		if strings.Contains(l, consts.LOCATION_PREFIX_SEQ) {
+			prefixIsErr := true
+			for _, prefix := range prefixList {
+				if strings.HasPrefix(l, prefix) {
+					prefixIsErr = false
+					break
+				}
+			}
+			if prefixIsErr {
+				return errors.New(fmt.Sprintf("The config location[%s]  prefix name error", l))
+			}
+		}
+
 	}
 	return nil
 }

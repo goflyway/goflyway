@@ -1,8 +1,8 @@
 package tests
 
 import (
-	"github.com/jiangliuhong/go-flyway"
-	"github.com/jiangliuhong/go-flyway/database"
+	"github.com/goflyway/goflyway"
+	"github.com/goflyway/goflyway/database"
 	"testing"
 )
 
