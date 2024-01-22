@@ -16,7 +16,7 @@ func TestMysqlMigrate(t *testing.T) {
 		BaselineOnMigrate: true,
 		Schemas:           []string{"goflyway", "goflyway2"},
 		CreateSchemas:     true,
-		CleanDisabled:     true,
+		//CleanDisabled:     true,
 	})
 	if err != nil {
 		t.Fatal(err)

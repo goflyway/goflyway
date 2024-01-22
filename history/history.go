@@ -115,7 +115,7 @@ func (sh *SchemaHistory) InitBaseLineRank() error {
 }
 
 func (sh SchemaHistory) InsertData(sd SchemaData) (newRank int64, err error) {
-	sql := sh.getBaseQuery() + ` where installed_rank >= ? `
+	sql := sh.getBaseQuery() + ` where installed_rank >= ? order by installed_rank desc limit 1`
 	var querySd SchemaData
 	newRank = 1
 	exist, err := sh.Database.Session().SelectOne(sql, &querySd, sh.BaseLineRank)
@@ -155,11 +155,13 @@ func (sh SchemaHistory) InsertData(sd SchemaData) (newRank int64, err error) {
 	return
 }
 
+// UpdateSuccessAndTime 修改状态和时间
 func (sh SchemaHistory) UpdateSuccessAndTime(rank int64, success bool, et int64) error {
 	sql := fmt.Sprintf(`update %s.%s set success = ? , execution_time = ? where installed_rank = ? `, sh.Schema.Name(), sh.Table.Name())
 	return sh.Database.Session().Exec(sql, success, et, rank)
 }
 
+// SelectVersion 根据版本查询
 func (sh SchemaHistory) SelectVersion(version string) (*SchemaData, error) {
 	sql := sh.getBaseQuery() + ` where version = ? and installed_rank > ? order by execution_time desc limit 1`
 	var sd SchemaData
@@ -173,15 +175,16 @@ func (sh SchemaHistory) SelectVersion(version string) (*SchemaData, error) {
 	return nil, nil
 }
 
-func (sh SchemaHistory) GetLatestRank() (int64, error) {
+// GetLatestVersion 获取最后一条记录的 version
+func (sh SchemaHistory) GetLatestVersion() (int64, string, error) {
 	sql := sh.getBaseQuery() + ` order by installed_rank desc limit 1`
 	var sd SchemaData
 	exists, err := sh.Database.Session().SelectOne(sql, &sd)
 	if err != nil {
-		return 0, err
+		return 0, "", err
 	}
 	if exists {
-		return sd.InstalledRank, nil
+		return sd.InstalledRank, sd.Version, nil
 	}
-	return 0, nil
+	return 0, "", nil
 }

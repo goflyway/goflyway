@@ -34,7 +34,7 @@ func (s Session) Insert(sql string, param ...any) (sql.Result, error) {
 	return s.db.Exec(sql, param...)
 }
 
-func (s Session) Select(sql string, param ...any) ([]map[string]interface{}, error) {
+func (s Session) SelectListMap(sql string, param ...any) ([]map[string]interface{}, error) {
 	rows, err := s.db.Query(sql, param...)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (s Session) Select(sql string, param ...any) ([]map[string]interface{}, err
 }
 
 func (s Session) SelectOneForMap(sql string, param ...any) (map[string]interface{}, error) {
-	list, err := s.Select(sql, param...)
+	list, err := s.SelectListMap(sql, param...)
 	if err != nil {
 		return nil, err
 	}
@@ -80,66 +80,88 @@ func (s Session) SelectOneForMap(sql string, param ...any) (map[string]interface
 	}
 }
 
-func (s Session) SelectOne(sql string, r interface{}, param ...any) (bool, error) {
-	val := reflect.ValueOf(r)
-	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
-		return false, errors.New("Expected a pointer to a structs")
+func rowScan(rows *sql.Rows, dest interface{}) error {
+	destType := reflect.TypeOf(dest)
+	if destType.Kind() != reflect.Ptr {
+		return errors.New("Expected a pointer to a structs or slice")
 	}
-	maps, err := s.Select(sql, param...)
+	if destType.Elem().Kind() == reflect.Slice {
+		destValue := reflect.ValueOf(dest)
+		elemType := destType.Elem()
+		if elemType.Kind() != reflect.Struct {
+			return errors.New("The slice element must be a structure")
+		}
+		numFields := elemType.NumField()
+		for rows.Next() {
+			structValue := reflect.New(elemType).Elem()
+			fieldValues := make([]interface{}, numFields)
+			for i := 0; i < numFields; i++ {
+				fieldValues[i] = reflect.New(elemType.Field(i).Type).Interface()
+			}
+			err := rows.Scan(fieldValues...)
+			if err != nil {
+				return err
+			}
+			for i := 0; i < numFields; i++ {
+				structValue.Field(i).Set(reflect.ValueOf(fieldValues[i]).Elem())
+			}
+
+			// 将结构体添加到切片中
+			destValue = reflect.Append(destValue, structValue)
+		}
+		return nil
+	} else if destType.Elem().Kind() == reflect.Struct {
+		destValue := reflect.ValueOf(dest).Elem()
+		numFields := destType.Elem().NumField()
+		fieldValues := make([]interface{}, numFields)
+		for i := 0; i < numFields; i++ {
+			// 创建一个与结构体字段类型相同的空值
+			fieldValues[i] = reflect.New(destType.Elem().Field(i).Type).Interface()
+		}
+		err := rows.Scan(fieldValues...)
+		if err != nil {
+			return err
+		}
+		for i := 0; i < numFields; i++ {
+			destValue.Field(i).Set(reflect.ValueOf(fieldValues[i]).Elem())
+		}
+		return nil
+	} else {
+		return errors.New("Expected a pointer to a structs or slice")
+	}
+}
+
+func (s Session) SelectOne(sql string, dest interface{}, param ...any) (bool, error) {
+	if reflect.TypeOf(dest).Kind() != reflect.Ptr && reflect.TypeOf(dest).Elem().Kind() != reflect.Struct {
+		return false, errors.New("Expected a pointer to a struct")
+	}
+	rows, err := s.db.Query(sql, param...)
 	if err != nil {
 		return false, err
 	}
-	if len(maps) == 0 {
+	defer rows.Close()
+	if !rows.Next() {
 		return false, nil
 	}
-	item := maps[0]
-	sliceType := val.Type().Elem()
-	for i := 0; i < sliceType.NumField(); i++ {
-		field := sliceType.Field(i)
-		column := field.Tag.Get("column")
-		if column == "" {
-			column = field.Name
-		}
-		if mapVal, ok := item[column]; ok {
-			v := val.Elem().FieldByName(field.Name)
-			rv := reflect.ValueOf(mapVal)
-			if rv.Type().AssignableTo(v.Type()) {
-				v.Set(rv)
-			}
-		}
-
+	err = rowScan(rows, dest)
+	if err != nil {
+		return false, err
 	}
 	return true, nil
 }
 
-func (s Session) SelectList(sql string, rList interface{}, param ...any) error {
-	val := reflect.ValueOf(rList)
-	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Slice {
+func (s Session) SelectList(sql string, dest interface{}, param ...any) error {
+	if reflect.TypeOf(dest).Kind() != reflect.Ptr && reflect.TypeOf(dest).Elem().Kind() != reflect.Slice {
 		return errors.New("Expected a pointer to a slice")
 	}
-	sliceType := val.Elem().Type().Elem()
-	if sliceType.Kind() != reflect.Struct {
-		return errors.New("Expected a slice of structs")
-	}
-
-	maps, err := s.Select(sql, param...)
+	rows, err := s.db.Query(sql, param...)
 	if err != nil {
 		return err
 	}
-	sliceVal := val.Elem()
-	for _, item := range maps {
-		instance := reflect.New(sliceType).Elem()
-		for i := 0; i < sliceType.NumField(); i++ {
-			field := sliceType.Field(i)
-			column := field.Tag.Get("column")
-			if column == "" {
-				column = field.Name
-			}
-			if mapVal, ok := item[column]; ok {
-				instance.FieldByName(field.Name).Set(reflect.ValueOf(mapVal))
-			}
-		}
-		sliceVal.Set(reflect.Append(sliceVal, instance))
+	defer rows.Close()
+	err = rowScan(rows, dest)
+	if err != nil {
+		return err
 	}
 	return nil
 }
