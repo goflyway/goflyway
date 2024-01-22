@@ -7,6 +7,7 @@ import (
 	"github.com/goflyway/goflyway/database"
 	"github.com/goflyway/goflyway/history"
 	"github.com/goflyway/goflyway/location"
+	"github.com/goflyway/goflyway/utils"
 	"time"
 )
 
@@ -28,13 +29,25 @@ func (m Migrate) Execute(ctx *Context) error {
 			return err
 		}
 	}
+	err = ctx.SchemaHistory.Schema.UseSchema()
+	if err != nil {
+		return err
+	}
 	err = ctx.SchemaHistory.InitBaseLineRank()
 	if err != nil {
 		return err
 	}
+	latestVersion := ""
+	if !ctx.Options.OutOfOrder {
+		_, version, err := ctx.SchemaHistory.GetLatestVersion()
+		if err != nil {
+			return err
+		}
+		latestVersion = version
+	}
 	for _, l := range ctx.Options.Locations {
 		for _, sql := range l.Sqls {
-			err = m.invokeSql(ctx.Database, ctx.SchemaHistory, sql)
+			err = m.invokeSql(ctx.Database, ctx.SchemaHistory, sql, latestVersion)
 			if err != nil {
 				return errors.New(fmt.Sprintf("Failed to execute the SQL file:%s\nerror:%s", sql.Path, err.Error()))
 			}
@@ -43,7 +56,7 @@ func (m Migrate) Execute(ctx *Context) error {
 	return nil
 }
 
-func (m Migrate) invokeSql(database database.Database, schemaHistory *history.SchemaHistory, sql location.SqlFile) error {
+func (m Migrate) invokeSql(database database.Database, schemaHistory *history.SchemaHistory, sql location.SqlFile, latestVersion string) error {
 	sd, err := schemaHistory.SelectVersion(sql.Version)
 	if err != nil {
 		return err
@@ -71,6 +84,17 @@ func (m Migrate) invokeSql(database database.Database, schemaHistory *history.Sc
 			}
 		}
 	} else {
+		// 传入的latestVersion不为空时，需要校验，新添加的sql版本是否高于latestVersion
+		if latestVersion != "" {
+			compare, err2 := utils.VersionCompare(sql.Version, latestVersion)
+			if err2 != nil {
+				return err2
+			}
+			if compare < 0 {
+				return errors.New(fmt.Sprintf("The current version is %s. cannot execute %s", latestVersion, sql.Version))
+			}
+		}
+
 		content, err2 := sql.Content()
 		if err2 != nil {
 			return err2

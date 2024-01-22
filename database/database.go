@@ -18,8 +18,12 @@ type Schema interface {
 	Exists() (bool, error)
 	Create() error
 	Table(name string) (Table, error)
-	// Empty schema is empty
+	// Empty 判断模式是否为空
 	Empty() (bool, error)
+	// Delete 删除模式
+	Delete() error
+	// UseSchema 设置该模式为当前使用的
+	UseSchema() error
 }
 
 type Table interface {
@@ -98,4 +102,10 @@ func (bs BaseSchema) Table(name string) (Table, error) {
 }
 func (bs BaseSchema) Empty() (bool, error) {
 	return false, nil
+}
+func (bs BaseSchema) Delete() error {
+	return nil
+}
+func (bs BaseSchema) UseSchema() error {
+	return nil
 }
