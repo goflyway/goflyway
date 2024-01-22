@@ -22,6 +22,10 @@ func buildCommandCtx(commandName string, f *flyway) (*command.Context, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = schemaCleanHandle(ctx.Database, f.config.Schemas, f.config.CleanDisabled)
+	if err != nil {
+		return nil, err
+	}
 	defaultSchema := f.config.DefaultSchema
 	if len(f.config.Schemas) > 0 {
 		defaultSchema = utils.StringIfNull(defaultSchema, f.config.Schemas[0])
@@ -65,6 +69,35 @@ func schemaHandle(d database.Database, schemas []string, createSchema bool) erro
 			return err
 		}
 		if !exists {
+			err = schema.Create()
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// schemaCleanHandle 清空 schema ，先删除后新建
+func schemaCleanHandle(d database.Database, schemas []string, cleanDisabled bool) error {
+	if !cleanDisabled {
+		return nil
+	}
+	for _, item := range schemas {
+		schema, err := d.Schema(item)
+		if err != nil {
+			return err
+		}
+		exists, err := schema.Exists()
+		if err != nil {
+			return err
+		}
+		// 如果存在，先删除再新建
+		if exists {
+			err = schema.Delete()
+			if err != nil {
+				return err
+			}
 			err = schema.Create()
 			if err != nil {
 				return err

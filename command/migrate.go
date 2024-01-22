@@ -28,6 +28,10 @@ func (m Migrate) Execute(ctx *Context) error {
 			return err
 		}
 	}
+	err = ctx.SchemaHistory.Schema.UseSchema()
+	if err != nil {
+		return err
+	}
 	err = ctx.SchemaHistory.InitBaseLineRank()
 	if err != nil {
 		return err

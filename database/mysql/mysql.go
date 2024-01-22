@@ -83,6 +83,17 @@ func (s mysqlSchema) Create() error {
 	sql := fmt.Sprintf(`create database %s `, s.Name())
 	return s.db.Exec(sql)
 }
+
+func (s mysqlSchema) Delete() error {
+	sql := fmt.Sprintf(`drop database %s `, s.Name())
+	return s.db.Exec(sql)
+}
+
+func (s mysqlSchema) UseSchema() error {
+	sql := fmt.Sprintf(`use %s `, s.Name())
+	return s.db.Exec(sql)
+}
+
 func (s mysqlSchema) Table(name string) (database.Table, error) {
 	return &mysqlTable{db: s.db, BaseTable: database.BaseTable{Table: name, Schema: s, Database: s.Database}}, nil
 }
