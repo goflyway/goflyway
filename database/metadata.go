@@ -1,13 +1,12 @@
 package database
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
+	"github.com/goflyway/goflyway/utils"
 	"os"
 	"path/filepath"
 	"runtime"
-	"text/template"
 )
 
 const metadataFileName = "createMetadata.sql"
@@ -24,14 +23,8 @@ func loadMetadataSql(t Type, schema, table string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	tpl := template.Must(template.New("").Parse(string(b)))
-	buffer := bytes.NewBuffer(nil)
-	err = tpl.Execute(buffer, map[string]interface{}{
+	return utils.FormatTemplate(string(b), map[string]interface{}{
 		"schema": schema,
 		"table":  table,
 	})
-	if err != nil {
-		return "", err
-	}
-	return buffer.String(), nil
 }

@@ -30,8 +30,9 @@ func Registry(name string, cmd Command) {
 }
 
 type Options struct {
-	Locations  []location.Location // 文件信息
-	OutOfOrder bool                // 是否支持乱序
+	Locations         []location.Location // 文件信息
+	OutOfOrder        bool                // 是否支持乱序
+	EnablePlaceholder bool
 }
 
 // Execute 执行命令
