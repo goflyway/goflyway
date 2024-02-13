@@ -24,14 +24,20 @@ type Context struct {
 }
 
 var commands = map[string]Command{}
+var dispatch = &CallbackDispatch{callbacks: map[string]*callback{}}
 
 func Registry(name string, cmd Command) {
 	commands[name] = cmd
 }
 
+func Callbacks() *CallbackDispatch {
+	return dispatch
+}
+
 type Options struct {
-	Locations  []location.Location // 文件信息
-	OutOfOrder bool                // 是否支持乱序
+	Locations         []location.Location // 文件信息
+	OutOfOrder        bool                // 是否支持乱序
+	EnablePlaceholder bool
 }
 
 // Execute 执行命令
@@ -40,5 +46,21 @@ func Execute(ctx *Context) error {
 	if !ok {
 		return errors.New(fmt.Sprintf("not found %s command", ctx.Command))
 	}
-	return cmd.Execute(ctx)
+	beforeHandlers := dispatch.before(ctx.Command)
+	if len(beforeHandlers) > 0 {
+		for _, h := range beforeHandlers {
+			h.handler(ctx)
+		}
+	}
+	err := cmd.Execute(ctx)
+	if err != nil {
+		return err
+	}
+	afterHandlers := dispatch.after(ctx.Command)
+	if len(afterHandlers) > 0 {
+		for _, h := range afterHandlers {
+			h.handler(ctx)
+		}
+	}
+	return nil
 }

@@ -47,7 +47,7 @@ func (m Migrate) Execute(ctx *Context) error {
 	}
 	for _, l := range ctx.Options.Locations {
 		for _, sql := range l.Sqls {
-			err = m.invokeSql(ctx.Database, ctx.SchemaHistory, sql, latestVersion)
+			err = m.invokeSql(ctx, sql, latestVersion)
 			if err != nil {
 				return errors.New(fmt.Sprintf("Failed to execute the SQL file:%s\nerror:%s", sql.Path, err.Error()))
 			}
@@ -56,7 +56,9 @@ func (m Migrate) Execute(ctx *Context) error {
 	return nil
 }
 
-func (m Migrate) invokeSql(database database.Database, schemaHistory *history.SchemaHistory, sql location.SqlFile, latestVersion string) error {
+func (m Migrate) invokeSql(ctx *Context, sql location.SqlFile, latestVersion string) error {
+	db := ctx.Database
+	schemaHistory := ctx.SchemaHistory
 	sd, err := schemaHistory.SelectVersion(sql.Version)
 	if err != nil {
 		return err
@@ -69,11 +71,11 @@ func (m Migrate) invokeSql(database database.Database, schemaHistory *history.Sc
 			return errors.New(fmt.Sprintf("Flyway checksum mismatch error\n database: %d,local:%d", sd.Checksum, checksum))
 		}
 		if !sd.Success {
-			content, err2 := sql.Content()
+			content, err2 := m.readSqlContent(sql, ctx)
 			if err2 != nil {
 				return err2
 			}
-			d, err2 := m.invokeSqlContent(database, content)
+			d, err2 := m.invokeSqlContent(db, content)
 			if err2 != nil {
 				return err2
 			} else {
@@ -95,7 +97,7 @@ func (m Migrate) invokeSql(database database.Database, schemaHistory *history.Sc
 			}
 		}
 
-		content, err2 := sql.Content()
+		content, err2 := m.readSqlContent(sql, ctx)
 		if err2 != nil {
 			return err2
 		}
@@ -112,11 +114,11 @@ func (m Migrate) invokeSql(database database.Database, schemaHistory *history.Sc
 		if err != nil {
 			return err
 		}
-		d, err2 := m.invokeSqlContent(database, content)
+		dur, err2 := m.invokeSqlContent(db, content)
 		if err2 != nil {
 			return err2
 		} else {
-			err = schemaHistory.UpdateSuccessAndTime(rank, true, d.Microseconds())
+			err = schemaHistory.UpdateSuccessAndTime(rank, true, dur.Microseconds())
 			if err != nil {
 				return err
 			}
@@ -131,4 +133,24 @@ func (m Migrate) invokeSqlContent(database database.Database, content string) (t
 	err := database.Session().Exec(content)
 	since := time.Since(start)
 	return since, err
+}
+
+func (m Migrate) readSqlContent(sql location.SqlFile, ctx *Context) (string, error) {
+	content, err := sql.Content()
+	if err != nil {
+		return "", err
+	}
+	if ctx.Options.EnablePlaceholder {
+		// 执行替换
+		env, err := GenSqlPlaceholderEnv(ctx, sql)
+		if err != nil {
+			return "", err
+		}
+		t, err := utils.FormatTemplate(content, env)
+		if err != nil {
+			return "", err
+		}
+		content = t
+	}
+	return content, nil
 }

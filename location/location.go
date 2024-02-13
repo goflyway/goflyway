@@ -105,7 +105,6 @@ func (s SqlFile) Content() (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	return string(b), nil
 }
 

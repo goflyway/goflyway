@@ -49,8 +49,9 @@ func buildCommandCtx(commandName string, f *flyway) (*command.Context, error) {
 		locations = append(locations, ls...)
 	}
 	ctx.Options = &command.Options{
-		Locations:  locations,
-		OutOfOrder: f.config.OutOfOrder,
+		Locations:         locations,
+		OutOfOrder:        f.config.OutOfOrder,
+		EnablePlaceholder: f.config.EnablePlaceholder,
 	}
 	return ctx, nil
 }
