@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/goflyway/goflyway/consts"
+	"github.com/goflyway/goflyway/logger"
 	"strings"
 )
 
@@ -33,6 +34,9 @@ func configBuild(c *Config) error {
 }
 
 func configDefaultValCallback(c *Config) error {
+	if c.Logger == nil {
+		c.Logger = logger.Default
+	}
 	if c.Table == "" {
 		c.Table = consts.DEFAULT_HISTORY_TABLE
 	}

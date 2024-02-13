@@ -54,3 +54,5 @@ func main() {
  DefaultSchema     | string   |                  | 默认的模式，为空时，默认为数据库连接的默认模式，如果指定了 Schemas 则取第一个为默认模式                                            
  CleanDisabled     | bool     | false            | 为ture时，会清空 Schemas 下所有表。注意：生产模式不要设置为true                                                    
  OutOfOrder        | bool     | false            | 是否允许版本乱序运行，为ture时，如果已经应用了1.0和3.0版本，现在发现了2.0版本，那么它也将被应用，而不是被忽略。                              
+ EnablePlaceholder | bool     | false            | 是否开启占位符替换，开启后将对sql文件进行处理                                                                    
+ DisableCallbacks  | bool     | false            | 是否禁用callbacks方法执行，开启后，callbacks将不生效                                                         

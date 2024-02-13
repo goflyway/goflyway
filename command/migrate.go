@@ -47,10 +47,13 @@ func (m Migrate) Execute(ctx *Context) error {
 	}
 	for _, l := range ctx.Options.Locations {
 		for _, sql := range l.Sqls {
+			startT := time.Now()
 			err = m.invokeSql(ctx, sql, latestVersion)
 			if err != nil {
 				return errors.New(fmt.Sprintf("Failed to execute the SQL file:%s\nerror:%s", sql.Path, err.Error()))
 			}
+			tc := time.Since(startT)
+			ctx.Logger.Info(ctx.Context, "invoke sql[%s] success,execution: %d ms", sql.Name, tc.Milliseconds())
 		}
 	}
 	return nil

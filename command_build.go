@@ -1,6 +1,7 @@
 package flyway
 
 import (
+	"context"
 	"github.com/goflyway/goflyway/command"
 	"github.com/goflyway/goflyway/database"
 	"github.com/goflyway/goflyway/history"
@@ -11,7 +12,9 @@ import (
 // buildFlyway 构建flyway对象
 func buildCommandCtx(commandName string, f *flyway) (*command.Context, error) {
 	ctx := &command.Context{
+		Context: context.Background(),
 		Command: commandName,
+		Logger:  f.config.Logger,
 	}
 	d, err := database.New(f.databaseType, f.db)
 	if err != nil {
@@ -52,6 +55,7 @@ func buildCommandCtx(commandName string, f *flyway) (*command.Context, error) {
 		Locations:         locations,
 		OutOfOrder:        f.config.OutOfOrder,
 		EnablePlaceholder: f.config.EnablePlaceholder,
+		DisableCallbacks:  f.config.DisableCallbacks,
 	}
 	return ctx, nil
 }

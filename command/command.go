@@ -1,11 +1,13 @@
 package command
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/goflyway/goflyway/database"
 	"github.com/goflyway/goflyway/history"
 	"github.com/goflyway/goflyway/location"
+	"github.com/goflyway/goflyway/logger"
 )
 
 type Command interface {
@@ -17,10 +19,12 @@ type Command interface {
 
 // Context 执行命令的上下文对象
 type Context struct {
+	context.Context
 	Command       string
 	Database      database.Database
 	SchemaHistory *history.SchemaHistory
 	Options       *Options
+	Logger        logger.Interface
 }
 
 var commands = map[string]Command{}
@@ -38,6 +42,7 @@ type Options struct {
 	Locations         []location.Location // 文件信息
 	OutOfOrder        bool                // 是否支持乱序
 	EnablePlaceholder bool
+	DisableCallbacks  bool
 }
 
 // Execute 执行命令
@@ -46,20 +51,24 @@ func Execute(ctx *Context) error {
 	if !ok {
 		return errors.New(fmt.Sprintf("not found %s command", ctx.Command))
 	}
-	beforeHandlers := dispatch.before(ctx.Command)
-	if len(beforeHandlers) > 0 {
-		for _, h := range beforeHandlers {
-			h.handler(ctx)
+	if !ctx.Options.DisableCallbacks {
+		beforeHandlers := dispatch.before(ctx.Command)
+		if len(beforeHandlers) > 0 {
+			for _, h := range beforeHandlers {
+				h.handler(ctx)
+			}
 		}
 	}
 	err := cmd.Execute(ctx)
 	if err != nil {
 		return err
 	}
-	afterHandlers := dispatch.after(ctx.Command)
-	if len(afterHandlers) > 0 {
-		for _, h := range afterHandlers {
-			h.handler(ctx)
+	if !ctx.Options.DisableCallbacks {
+		afterHandlers := dispatch.after(ctx.Command)
+		if len(afterHandlers) > 0 {
+			for _, h := range afterHandlers {
+				h.handler(ctx)
+			}
 		}
 	}
 	return nil

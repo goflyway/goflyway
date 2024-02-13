@@ -6,6 +6,7 @@ import (
 	"github.com/goflyway/goflyway/consts"
 	"github.com/goflyway/goflyway/database"
 	_ "github.com/goflyway/goflyway/init"
+	"github.com/goflyway/goflyway/logger"
 )
 
 type flyway struct {
@@ -44,6 +45,7 @@ func Open(databaseType string, db *sql.DB, config *Config) (*flyway, error) {
 }
 
 type Config struct {
+	Logger            logger.Interface
 	Locations         []string
 	Table             string
 	BaselineOnMigrate bool     // 是否使用基线迁移
@@ -53,4 +55,5 @@ type Config struct {
 	CleanDisabled     bool     // 为ture时，会清空 Schemas 下所有表
 	OutOfOrder        bool     // 是否允许版本乱序运行，为ture时，如果已经应用了1.0和3.0版本，现在发现了2.0版本，那么它也将被应用，而不是被忽略。
 	EnablePlaceholder bool     // 是否开启占位符替换
+	DisableCallbacks  bool     // 是否禁用callback
 }
