@@ -24,6 +24,7 @@ type Context struct {
 }
 
 var commands = map[string]Command{}
+var dispatch = &callbackDispatch{}
 
 func Registry(name string, cmd Command) {
 	commands[name] = cmd
@@ -41,5 +42,21 @@ func Execute(ctx *Context) error {
 	if !ok {
 		return errors.New(fmt.Sprintf("not found %s command", ctx.Command))
 	}
-	return cmd.Execute(ctx)
+	beforeHandlers := dispatch.before(ctx.Command)
+	if len(beforeHandlers) > 0 {
+		for _, h := range beforeHandlers {
+			h.handler(ctx)
+		}
+	}
+	err := cmd.Execute(ctx)
+	if err != nil {
+		return err
+	}
+	afterHandlers := dispatch.after(ctx.Command)
+	if len(afterHandlers) > 0 {
+		for _, h := range afterHandlers {
+			h.handler(ctx)
+		}
+	}
+	return nil
 }
