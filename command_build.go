@@ -52,6 +52,7 @@ func buildCommandCtx(commandName string, f *flyway) (*command.Context, error) {
 		Locations:         locations,
 		OutOfOrder:        f.config.OutOfOrder,
 		EnablePlaceholder: f.config.EnablePlaceholder,
+		DisableCallbacks:  f.config.DisableCallbacks,
 	}
 	return ctx, nil
 }
