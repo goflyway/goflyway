@@ -1,10 +1,32 @@
 package utils
 
 import (
+	"bytes"
 	"errors"
+	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
+	"text/template"
 )
+
+var flywaySourceDir string
+
+func init() {
+	_, file, _, _ := runtime.Caller(0)
+	// compatible solution to get gorm source directory with various operating systems
+	flywaySourceDir = regexp.MustCompile(`utils.utils\.go`).ReplaceAllString(file, "")
+}
+
+func FormatTemplate(tpl string, envs map[string]interface{}) (string, error) {
+	t := template.Must(template.New("").Parse(tpl))
+	buffer := bytes.NewBuffer(nil)
+	err := t.Execute(buffer, envs)
+	if err != nil {
+		return "", err
+	}
+	return buffer.String(), nil
+}
 
 // StringIfNull 返回第一个不为空的字符串
 func StringIfNull(str ...string) string {
@@ -67,4 +89,15 @@ func VersionCompare(version1, version2 string) (int, error) {
 		}
 		return 0, nil
 	}
+}
+
+func FileWithLineNum() string {
+	// the second caller usually from gorm internal, so set i start from 2
+	for i := 2; i < 15; i++ {
+		_, file, line, ok := runtime.Caller(i)
+		if ok && (!strings.HasPrefix(file, flywaySourceDir) || strings.HasSuffix(file, "_test.go")) {
+			return file + ":" + strconv.FormatInt(int64(line), 10)
+		}
+	}
+	return ""
 }

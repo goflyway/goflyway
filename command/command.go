@@ -1,11 +1,13 @@
 package command
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/goflyway/goflyway/database"
 	"github.com/goflyway/goflyway/history"
 	"github.com/goflyway/goflyway/location"
+	"github.com/goflyway/goflyway/logger"
 )
 
 type Command interface {
@@ -17,10 +19,12 @@ type Command interface {
 
 // Context 执行命令的上下文对象
 type Context struct {
+	context.Context
 	Command       string
 	Database      database.Database
 	SchemaHistory *history.SchemaHistory
 	Options       *Options
+	Logger        logger.Interface
 }
 
 var commands = map[string]Command{}

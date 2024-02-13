@@ -6,6 +6,7 @@ import (
 	"github.com/goflyway/goflyway/consts"
 	"github.com/goflyway/goflyway/database"
 	_ "github.com/goflyway/goflyway/init"
+	"github.com/goflyway/goflyway/logger"
 )
 
 type flyway struct {
@@ -44,6 +45,7 @@ func Open(databaseType string, db *sql.DB, config *Config) (*flyway, error) {
 }
 
 type Config struct {
+	Logger            logger.Interface
 	Locations         []string
 	Table             string
 	BaselineOnMigrate bool     // 是否使用基线迁移
