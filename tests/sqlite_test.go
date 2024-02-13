@@ -1,7 +1,9 @@
 package tests
 
 import (
+	"fmt"
 	flyway "github.com/goflyway/goflyway"
+	"github.com/goflyway/goflyway/command"
 	"github.com/goflyway/goflyway/database"
 	"testing"
 )
@@ -15,6 +17,9 @@ func TestSqliteMigrate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	f.Callbacks().Registry("before:migrate", "test", func(context *command.Context) {
+		fmt.Println("test before migrate")
+	})
 	err = f.Migrate()
 	if err != nil {
 		t.Fatal(err)

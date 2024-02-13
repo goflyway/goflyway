@@ -22,6 +22,10 @@ func (f *flyway) Migrate() error {
 	return command.Execute(ctx)
 }
 
+func (f *flyway) Callbacks() *command.CallbackDispatch {
+	return command.Callbacks()
+}
+
 func Open(databaseType string, db *sql.DB, config *Config) (*flyway, error) {
 	dbType, err := database.TypeValueOf(databaseType)
 	if err != nil {

@@ -24,10 +24,14 @@ type Context struct {
 }
 
 var commands = map[string]Command{}
-var dispatch = &callbackDispatch{}
+var dispatch = &CallbackDispatch{callbacks: map[string]*callback{}}
 
 func Registry(name string, cmd Command) {
 	commands[name] = cmd
+}
+
+func Callbacks() *CallbackDispatch {
+	return dispatch
 }
 
 type Options struct {

@@ -142,7 +142,10 @@ func (m Migrate) readSqlContent(sql location.SqlFile, ctx *Context) (string, err
 	}
 	if ctx.Options.EnablePlaceholder {
 		// 执行替换
-		env := GenSqlPlaceholderEnv(ctx, sql)
+		env, err := GenSqlPlaceholderEnv(ctx, sql)
+		if err != nil {
+			return "", err
+		}
 		t, err := utils.FormatTemplate(content, env)
 		if err != nil {
 			return "", err
