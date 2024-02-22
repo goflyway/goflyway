@@ -73,3 +73,33 @@ func Execute(ctx *Context) error {
 	}
 	return nil
 }
+
+func beforeExecute(ctx *Context) (string, error) {
+	exists, err := ctx.SchemaHistory.Exists()
+	if err != nil {
+		return "", err
+	}
+	if !exists {
+		err = ctx.SchemaHistory.Create()
+		if err != nil {
+			return "", err
+		}
+	}
+	err = ctx.SchemaHistory.Schema.UseSchema()
+	if err != nil {
+		return "", err
+	}
+	err = ctx.SchemaHistory.InitBaseLineRank()
+	if err != nil {
+		return "", err
+	}
+	latestVersion := ""
+	if !ctx.Options.OutOfOrder {
+		_, version, err := ctx.SchemaHistory.GetLatestVersion()
+		if err != nil {
+			return "", err
+		}
+		latestVersion = version
+	}
+	return latestVersion, nil
+}

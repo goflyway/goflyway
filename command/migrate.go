@@ -19,31 +19,9 @@ type Migrate struct {
 }
 
 func (m Migrate) Execute(ctx *Context) error {
-	exists, err := ctx.SchemaHistory.Exists()
+	latestVersion, err := beforeExecute(ctx)
 	if err != nil {
 		return err
-	}
-	if !exists {
-		err = ctx.SchemaHistory.Create()
-		if err != nil {
-			return err
-		}
-	}
-	err = ctx.SchemaHistory.Schema.UseSchema()
-	if err != nil {
-		return err
-	}
-	err = ctx.SchemaHistory.InitBaseLineRank()
-	if err != nil {
-		return err
-	}
-	latestVersion := ""
-	if !ctx.Options.OutOfOrder {
-		_, version, err := ctx.SchemaHistory.GetLatestVersion()
-		if err != nil {
-			return err
-		}
-		latestVersion = version
 	}
 	for _, l := range ctx.Options.Locations {
 		for _, sql := range l.Sqls {

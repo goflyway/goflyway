@@ -23,6 +23,14 @@ func (f *flyway) Migrate() error {
 	return command.Execute(ctx)
 }
 
+func (f *flyway) Validate() error {
+	ctx, err := buildCommandCtx(consts.CMD_NAME_VALIDATE, f)
+	if err != nil {
+		return err
+	}
+	return command.Execute(ctx)
+}
+
 func (f *flyway) Callbacks() *command.CallbackDispatch {
 	return command.Callbacks()
 }
