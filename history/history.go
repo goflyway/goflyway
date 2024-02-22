@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/goflyway/goflyway/consts"
 	"github.com/goflyway/goflyway/database"
+	"github.com/goflyway/goflyway/utils"
 	"time"
 )
 
@@ -19,6 +20,7 @@ type SchemaHistory struct {
 type SchemaHistoryConfig struct {
 	TableName         string
 	BaselineOnMigrate bool
+	BaselineVersion   string
 	DefaultSchema     string
 }
 
@@ -97,7 +99,7 @@ func (sh *SchemaHistory) InitBaseLineRank() error {
 			sh.BaseLineRank = 0
 		} else {
 			sd = SchemaData{
-				Version:       "1",
+				Version:       utils.StringIfNull(sh.Config.BaselineVersion, "1"),
 				Description:   consts.BASE_LINE_DESC,
 				Type:          consts.BASE_LINE_TYPE,
 				Script:        consts.BASE_LINE_DESC,
