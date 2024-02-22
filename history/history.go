@@ -19,6 +19,7 @@ type SchemaHistory struct {
 type SchemaHistoryConfig struct {
 	TableName         string
 	BaselineOnMigrate bool
+	BaselineVersion   string
 	DefaultSchema     string
 }
 

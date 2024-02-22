@@ -4,7 +4,9 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"github.com/goflyway/goflyway/consts"
+	"github.com/goflyway/goflyway/utils"
 	"io"
 	"io/fs"
 	"os"
@@ -18,7 +20,12 @@ type Location struct {
 	Sqls         []SqlFile // sql列表
 }
 
-func New(location ...string) ([]Location, error) {
+type Option struct {
+	SqlMigrationSeparator string
+	SqlMigrationPrefix    string
+}
+
+func New(option *Option, location ...string) ([]Location, error) {
 	var locations []Location
 	if len(location) > 0 {
 		for _, item := range location {
@@ -29,7 +36,7 @@ func New(location ...string) ([]Location, error) {
 			} else {
 				location = Location{IsFileSystem: false, Path: item}
 			}
-			err := loadSqlFile(&location)
+			err := loadSqlFile(option, &location)
 			if err != nil {
 				return locations, err
 			}
@@ -39,7 +46,7 @@ func New(location ...string) ([]Location, error) {
 	return locations, nil
 }
 
-func loadSqlFile(location *Location) error {
+func loadSqlFile(option *Option, location *Location) error {
 	if location.Sqls == nil {
 		location.Sqls = make([]SqlFile, 0)
 	}
@@ -57,14 +64,19 @@ func loadSqlFile(location *Location) error {
 			return nil
 		}
 		fileName := info.Name()
-		if !strings.HasPrefix(fileName, "V") && !strings.HasPrefix(fileName, "R") {
-			return errors.New("sql file name must be V${version}__${description} or R${version}__${description}")
+		//if !strings.HasPrefix(fileName, "V") && !strings.HasPrefix(fileName, "R") {
+		//	return errors.New("sql file name must be V${version}__${description} or R${version}__${description}")
+		//}
+		prefix := utils.StringIfNull(option.SqlMigrationPrefix, "V")
+		if !strings.HasPrefix(fileName, prefix) {
+			return errors.New(fmt.Sprintf("sql file name must be %s${version}__${description}", prefix))
 		}
 		mod := fileName[0:1]
 		fileName = fileName[1:]
-		split := strings.Split(fileName, "__")
+		separator := utils.StringIfNull(option.SqlMigrationSeparator, "__")
+		split := strings.Split(fileName, separator)
 		if len(split) != 2 {
-			return errors.New("sql file name must be V${version}__${description} or R${version}__${description}")
+			return errors.New(fmt.Sprintf("sql file name must be %s${version}%s${description}", prefix, separator))
 		}
 		versionFull := split[0]
 		version := strings.ReplaceAll(versionFull, "_", ".")

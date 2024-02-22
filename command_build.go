@@ -36,6 +36,7 @@ func buildCommandCtx(commandName string, f *flyway) (*command.Context, error) {
 	s, err := history.New(ctx.Database, history.SchemaHistoryConfig{
 		TableName:         f.config.Table,
 		BaselineOnMigrate: f.config.BaselineOnMigrate,
+		BaselineVersion:   f.config.BaselineVersion,
 		DefaultSchema:     defaultSchema,
 	})
 	if err != nil {
@@ -43,8 +44,12 @@ func buildCommandCtx(commandName string, f *flyway) (*command.Context, error) {
 	}
 	ctx.SchemaHistory = s
 	var locations []location.Location
+	locationOption := &location.Option{
+		SqlMigrationSeparator: f.config.SqlMigrationSeparator,
+		SqlMigrationPrefix:    f.config.SqlMigrationPrefix,
+	}
 	for _, item := range f.config.Locations {
-		ls, err2 := location.New(item)
+		ls, err2 := location.New(locationOption, item)
 		if err2 != nil {
 			err = err2
 			return ctx, err
